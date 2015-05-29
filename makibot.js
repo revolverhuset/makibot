@@ -1,8 +1,16 @@
 var Slack = require('slack-client');
 var fs = require('fs');
 var token = require('./token.json');
-var aliases = require('./aliases.json');
 
+var aliases;
+fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
+  if (e) {
+    fs.writeFileSync(__dirname + "/aliases.json", "{}");
+    aliases = {};
+    return;
+  }
+  aliases = JSON.parse(datas);
+})
 var slack = new Slack(token, true, true);
 
 var order = undefined;
@@ -51,6 +59,12 @@ var handlers = {
     fs.writeFileSync(fn, JSON.stringify(order));
     order = undefined;
     channel.send("closed order and stashed it as " + fn);
+  },
+  alias: function(channel, message, args) {
+    args = args.split(' ');
+    if (args.length != 2) return channel.send("usage: fisk! alias <username> <alias>");
+    aliases[args[0]] = args[1];
+    fs.writeFileSync(__dirname + "/aliases.json", JSON.stringify(aliases));
   },
   replace: function(channel, message, args) {
     if (!message.user) return;
