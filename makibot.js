@@ -7,10 +7,12 @@ var slack = new Slack(token, true, true);
 var order = undefined;
 
 slack.on('message', function(message) {
+  if (!message.text) return;
   if (!message.text.match(/^fisk!/)) return;
   var channel = slack.getChannelGroupOrDMByID(message.channel);
   var grp = message.text.match(/^fisk!\s+(\w+)\s*(.*)$/, '');
-  if (!handlers[grp[1]]) {
+  if (!grp) return channel.send('dammit helge!')
+  if (!grp[1] || !handlers[grp[1]]) {
     channel.send('unsupported command! try one of these: ' + Object.keys(handlers).join(', '))
   } else {
     handlers[grp[1]](channel, message, grp[2]);
@@ -26,7 +28,9 @@ var handlers = {
     channel.send('opened a new order!');
   },
   order: function(channel, message, args) {
+    if (!message.user) return;
     var user = slack.getUserByID(message.user);
+    if (!user) return;
     createOrder(channel, message, user.name, args);
   },
   orderfor: function(channel, message, args) {
