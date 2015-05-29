@@ -50,6 +50,12 @@ var handlers = {
     fs.writeFileSync(fn, JSON.stringify(order));
     order = undefined;
     channel.send("closed order and stashed it as " + fn);
+  },
+  replace: function(channel, message, args) {
+    if (!message.user) return;
+    var user = slack.getUserByID(message.user);
+    if (!user) return;
+    changeOrder(channel, message, user.name, args);
   }
 }
 
@@ -70,6 +76,27 @@ function createOrder(channel, message, user, text) {
   channel.send("added an order for " + user + ": " + newOrder.text);
 }
 
+function changeOrder(channel, message, user, sub) {
+  if (order == null) return channel.send("there's no open order. open one with 'fisk! openorder'");
+  // so many things wrong with this but it works for simple stuff so ok.
+  var submatch = sub.match(/s\/(.+[^\\])\/(.+[^\\])\//);
+  if (!submatch) return channel.send("didn't understand replace syntax. try s/regex/replacement/");
+  var matcher;
+  try {
+    matcher = new RegExp(submatch[0]);
+  } catch(e) {
+    return channel.send("bad regex: " + e);
+  }
+
+  var didFindAMatch = false;
+  order.orders.forEach(function(order) {
+    if (order.user != user) return;
+    didFindAMatch = true;
+    order.text = order.text.replace(matcher, submatch[2]);
+    channel.send('order for ' + user + ' changed to: ' + order.text);
+  });
+  if (!didFindAMatch) channel.send("didn't find an order for " + user + " to change");
+}
 
 
 slack.login()
