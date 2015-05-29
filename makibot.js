@@ -1,6 +1,7 @@
 var Slack = require('slack-client');
 var fs = require('fs');
 var token = require('./token.json');
+var aliases = require('./aliases.json');
 
 var slack = new Slack(token, true, true);
 
@@ -24,7 +25,7 @@ var handlers = {
     if (order != null) {
       return channel.send("there's already an open order. close it first with 'fisk! closeorder'");
     }
-    order = {orders:[],time:Date.now()};
+    order = {orders:[],id: "order_" + Date.now()};
     channel.send('opened a new order!');
   },
   order: function(channel, message, args) {
@@ -46,7 +47,7 @@ var handlers = {
   },
   closeorder: function(channel, message) {
     if (order == null) return channel.send("there's no open order.");
-    var fn = (new Date()) + ".json";
+    var fn = order.id + ".json";
     fs.writeFileSync(fn, JSON.stringify(order));
     order = undefined;
     channel.send("closed order and stashed it as " + fn);
