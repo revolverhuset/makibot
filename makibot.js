@@ -56,6 +56,22 @@ var handlers = {
     var user = slack.getUserByID(message.user);
     if (!user) return;
     changeOrder(channel, message, user.name, args);
+  },
+  load: function(channel, message, args) {
+    if (order != null) return channel.send("there's an order open already. close if it first");
+    var exists = fs.existsSync(__dirname + '/' + args);
+    if (!exists) return channel.send("couldn't find file " + args);
+    var file = fs.readFileSync(__dirname + '/' + args, 'utf8');
+    var data;
+    try {
+      data = JSON.parse(file);
+      if (!Array.isArray(data.orders)) throw "invalid file";
+    } catch (e) {
+      return channel.send("bad file: "+e);
+    }
+    
+    order = data;
+    handlers.summary(channel, message);
   }
 }
 
