@@ -79,11 +79,11 @@ function createOrder(channel, message, user, text) {
 function changeOrder(channel, message, user, sub) {
   if (order == null) return channel.send("there's no open order. open one with 'fisk! openorder'");
   // so many things wrong with this but it works for simple stuff so ok.
-  var submatch = sub.match(/s\/(.+[^\\])\/(.+[^\\])\//);
+  var submatch = sub.match(/s\/(.+[^\\])\/(.*[^\\])\//);
   if (!submatch) return channel.send("didn't understand replace syntax. try s/regex/replacement/");
   var matcher;
   try {
-    matcher = new RegExp(submatch[0]);
+    matcher = new RegExp(submatch[1]);
   } catch(e) {
     return channel.send("bad regex: " + e);
   }
