@@ -28,13 +28,20 @@ slack.on('message', function(message) {
   }
 });
 
+function saveorder() {
+  if (!order) return;
+    var fn = order.id + ".json";
+  fs.writeFileSync(fn, JSON.stringify(order));
+}
+
 var handlers = {
   openorder: function(channel, message, args) {
     if (order != null) {
       return channel.send("there's already an open order. close it first with 'fisk! closeorder'");
     }
     order = {orders:[],id: "order_" + Date.now()};
-    channel.send('opened a new order!');
+    channel.send('opened a new order on ' + order.id + '.json');
+    saveorder();
   },
   order: function(channel, message, args) {
     if (!message.user) return;
@@ -55,8 +62,7 @@ var handlers = {
   },
   closeorder: function(channel, message) {
     if (order == null) return channel.send("there's no open order.");
-    var fn = order.id + ".json";
-    fs.writeFileSync(fn, JSON.stringify(order));
+    saveorder();
     order = undefined;
     channel.send("closed order and stashed it as " + fn);
   },
@@ -105,6 +111,7 @@ function createOrder(channel, message, user, text) {
   var newOrder = {user: user || "unnamed user", text: text};
   order.orders.push(newOrder);
   channel.send("added an order for " + user + ": " + newOrder.text);
+  saveorder()
 }
 
 function changeOrder(channel, message, user, sub) {
@@ -127,6 +134,7 @@ function changeOrder(channel, message, user, sub) {
     channel.send('order for ' + user + ' changed to: ' + order.text);
   });
   if (!didFindAMatch) channel.send("didn't find an order for " + user + " to change");
+  saveorder()
 }
 
 
