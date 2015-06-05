@@ -63,8 +63,8 @@ var handlers = {
   closeorder: function(channel, message) {
     if (order == null) return channel.send("there's no open order.");
     saveorder();
+    channel.send("closed order and stashed it as " + order.id + ".json");
     order = undefined;
-    channel.send("closed order and stashed it as " + fn);
   },
   alias: function(channel, message, args) {
     args = args.split(' ');
