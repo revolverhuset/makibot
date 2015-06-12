@@ -80,6 +80,21 @@ var handlers = {
     if (!user) return;
     changeOrder(channel, message, user.name, args);
   },
+  remove: function(channel, message, args) {
+    if (!message.user && !args) return channel.send("hæ?!");
+    if (order == null) return channel.send("i don't see any open order bro");
+    if (!args) {
+      var user = slack.getUserByID(message.user);
+      args = user.name;
+    }
+    var count = order.orders.length;
+    order.orders = order.orders.filter(function(order) {
+      return order.user != args;
+    });
+    var newCount = order.orders.length;
+    channel.send("removed " + (count-newCount) + " orders matching '" + args + "'");
+    saveorder();
+  },
   pricecheck: function(channel, message, args) {
     if (order == null) return channel.send("i don't see any open order bro");
     async.map(order.orders, function(order, cb) {
