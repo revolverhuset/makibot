@@ -59,9 +59,11 @@ function fetchPriceForItem(fetchPriceFor, callback) {
 };
 
 var splitters = ['og','and',',','&','+'];
-module.exports = fetchMatchesForOrder(order, callback) {
+module.exports = function fetchMatchesForOrder(order, callback) {
   var parts = order.split(/(og|and|[,&+])\s/).filter(function(p) {
     return splitters.indexOf(p) == -1 && !!p && !!p.trim();
   });
-  console.log(order);
+  async.map(parts, function(part, cb) {
+    fetchPriceForItem(part, cb)
+  }, callback)
 }
