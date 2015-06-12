@@ -18,24 +18,23 @@ async.map(menuPages, function(page, cb) {
     if (err) return cb();
     var items = window.document.querySelectorAll('.one-quarter');
     var collected = [];
-    if (!items) {
+    if (!items || items.length == 0) {
       console.log('warning!', page, 'returned no menu items.');
       return callback(null, [])
     }
     [].forEach.call(items, function(item) {
       var title = item.querySelector('h4 span');
       if (!title) return;
-      var menuItem = { name: title.innerText };
-      var desc = item.querySelector('p');
-      var matchPrice = /(\d+),[\d-]+\s*$/;
-      if (!desc || !desc.innerText || !desc.innerText.match(matchPrice)) {
+      var menuItem = { name: title.innerHTML };
+      var desc = item.querySelectorAll('p');
+      if (desc.length == 0) {
         menuItem.price = 0;
-        collected.push(menuItem);
-        return;
+        return collected.push(menuItem);
       }
-
-      var price = desc.innerText.match(matchPrice)[1];
-      menuItem.price = parseInt(price, 10);
+      var matchPrice = /(\d+),[\d-]+\s*$/;
+      var concatDesc = [].map.call(desc, function(d) { return d.innerHTML }).join(' ');
+      var priceMatch = concatDesc.match(matchPrice);
+      menuItem.price = priceMatch ? parseInt(priceMatch[1], 10) : 0;
 
       collected.push(menuItem);
     });
