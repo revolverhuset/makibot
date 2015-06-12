@@ -104,12 +104,16 @@ var handlers = {
       });
     }, function(e, orders) {
       if (e) return channel.send('something broke when finding prices. ' + e);
+      var totalPrice = 0;
       var found = orders.map(function(o) {
-        return o.user + ": " + o.matches.map(function(match) {
-          return match.name + ' - ' + match.price + 'kr';
-        }).join(', ') + " + " + (75 / order.orders.length).toFixed(0) + "kr delivery";
+        var total = o.matches.reduce(function(t, o) { return t + o.price }, 0) + (75/order.orders.length);
+        totalPrice += total;
+        return o.user + ": " + total.toFixed(0) + "kr (" + o.matches.map(function(match) {
+          return match.name + '—' + match.price + 'kr';
+        }).join(', ') + " + " + (75 / order.orders.length).toFixed(0) + "kr delivery)";
       }).join('\n');
-      channel.send("ok, here's what those orders looked like to me:\n" + found)
+      var total = "total: " + totalPrice.toFixed(0) + 'kr';
+      channel.send("ok, here's what those orders looked like to me:\n" + found + '\n' + total)
     });
   },
   load: function(channel, message, args) {
