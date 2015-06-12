@@ -9,6 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "slack-client": "^1.4.0"
+    "async": "^1.2.1",
+    "jsdom": "^5.4.3",
+    "slack-client": "^1.4.0",
+    "string-similarity": "^1.0.0"
   }
 }
