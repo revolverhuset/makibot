@@ -48,7 +48,7 @@ async.map(menuPages, function(page, cb) {
   menu(null, menuItems);
 })
 
-module.exports = function(fetchPriceFor, callback) {
+function fetchPriceForItem(fetchPriceFor, callback) {
   menu.then(function(e, menu) {
     var menu = _.clone(menu);   
     menu.forEach(function(item) {
@@ -57,3 +57,11 @@ module.exports = function(fetchPriceFor, callback) {
     callback(null, _.sortBy(menu, function(d) { return -d.distance })[0])
   });
 };
+
+var splitters = ['og','and',',','&','+'];
+module.exports = fetchMatchesForOrder(order, callback) {
+  var parts = order.split(/(og|and|[,&+])\s/).filter(function(p) {
+    return splitters.indexOf(p) == -1 && !!p && !!p.trim();
+  });
+  console.log(order);
+}
