@@ -116,6 +116,29 @@ var handlers = {
       channel.send("ok, here's what those orders looked like to me:\n" + found + '\n' + total)
     });
   },
+  sharebill: function(channel, message, args) {
+    if (order == null) return channel.send("i don't see any open order bro");
+    if (!args) return channel.send('usage: fisk! sharebill <payer id>');
+    async.map(order.orders, function(order, cb) {
+      price(order.text, function(e, matches) {
+        if (e) return cb(e);
+        else cb(null, {matches: matches, user:order.user});
+      });
+    }, function(e, orders) {
+      if (e) return channel.send('something broke when finding prices. ' + e);
+      var totalPrice = 0;
+      var users = orders.map(function(o, i) {
+        var total = o.matches.reduce(function(t, o) { return t + o.price }, 0) + (75/order.orders.length);
+        var alias = aliases[o.user] || o.user;
+        var js = "$('.debets .account_input:eq(" + i + ") input').val('" + alias + "');" +
+                 "$('.currency.debets .currency_input:eq(" + i + ") input').val('" + totalPrice + "');";
+        return js;
+      }).join('');
+      var total = "$('.credits .account_input:eq(0) input').val('" + args + "');" +
+               "$('.currency.credits .currency_input:eq(0) input').val('" + totalPrice + "');";
+      channel.send('`javascript:' + users + total + '`');
+    });
+  },
   load: function(channel, message, args) {
     if (order != null) return channel.send("there's an order open already. close if it first");
     var exists = fs.existsSync(__dirname + '/' + args);
