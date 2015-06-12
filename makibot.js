@@ -127,12 +127,17 @@ var handlers = {
     }, function(e, orders) {
       if (e) return channel.send('something broke when finding prices. ' + e);
       var totalPrice = 0;
+      var accounts= {};
       var users = orders.map(function(o, i) {
         var total = o.matches.reduce(function(t, o) { return t + o.price }, 0) + (75/order.orders.length);
         var alias = aliases[o.user] || o.user;
-        var js = "$('.debets .account_input:eq(" + i + ") input').val('" + alias + "');" +
-                 "$('.currency.debets .currency_input:eq(" + i + ") input').val('" + totalPrice + "');";
+        totalPrice += total;
+        accounts[alias] = accounts[alias] ? accounts[alias] + total : total;
         return js;
+      });
+      Object.keys(accounts).map(function(acc) {
+        return "$('.debets .account_input:eq(" + i + ") input').val('" + acc + "');" +
+               "$('.currency.debets .currency_input:eq(" + i + ") input').val('" + accounts[acc] + "');";
       }).join('');
       var total = "$('.credits .account_input:eq(0) input').val('" + args + "');" +
                "$('.currency.credits .currency_input:eq(0) input').val('" + totalPrice + "');";
