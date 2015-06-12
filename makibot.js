@@ -1,6 +1,8 @@
 var Slack = require('slack-client');
 var fs = require('fs');
 var token = require('./token.json');
+var async = require('async');
+var price = require('./fetch_price');
 
 var aliases;
 fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
@@ -77,6 +79,23 @@ var handlers = {
     var user = slack.getUserByID(message.user);
     if (!user) return;
     changeOrder(channel, message, user.name, args);
+  },
+  pricecheck: function(channel, message, args) {
+    if (order == null) return channel.send("i don't see any open order bro");
+    async.map(order.orders, function(order, cb) {
+      price(order.text, function(e, matches) {
+        if (e) return callback(e);
+        else callback(null, {matches: matches, user:order.user});
+      });
+    }, function(e, orders) {
+      if (e) return channel.send('something broke when finding prices. ' + e);
+      var found = orders.map(function(o) {
+        return o.user + ": " + o.matches.map(function(match) {
+          return match.name + ' - ' + match.price + 'kr';
+        }).join(', ') + " + " + (75 / order.orders.length).toFixed(0) + "kr delivery".
+      }).join('\n');
+      channel.send("ok, here's what those orders looked like to me:\n" + found)
+    });
   },
   load: function(channel, message, args) {
     if (order != null) return channel.send("there's an order open already. close if it first");
