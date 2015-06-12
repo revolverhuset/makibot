@@ -17,6 +17,10 @@ async.map(menuPages, function(page, cb) {
     if (err) return cb();
     var items = window.document.querySelectorAll('.one-quarter');
     var collected = [];
+    if (!items) {
+      console.log('warning!', page, 'returned no menu items.');
+      return callback(null, [])
+    }
     items.forEach(function(item) {
       var title = item.querySelector('h4 span');
       if (!title) return;
