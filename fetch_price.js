@@ -13,6 +13,7 @@ var jsdom = require('jsdom');
 var async = require('async');
 var _ = require('underscore')
 var augur = require('augur');
+var similarity = require('string-similarity');
 
 var menu = augur();
 async.map(menuPages, function(page, cb) {
@@ -43,7 +44,16 @@ async.map(menuPages, function(page, cb) {
     cb(null, collected);
   });
 }, function(err, pageItems) {
-  var menu = _.flatten(pageItems);
-  menu(null, pageItems);
+  var menuItems = _.flatten(pageItems);
+  menu(null, menuItems);
 })
 
+module.exports = function(fetchPriceFor, callback) {
+  menu.then(function(e, menu) {
+    var menu = _.clone(menu);   
+    menu.forEach(function(item) {
+      item.distance = similarity.compareTwoStrings(fetchPriceFor, item.name);
+    });
+    callback(null, _.sortBy(menu, function(d) { return -d.distance })[0])
+  });
+};
