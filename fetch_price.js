@@ -11,6 +11,7 @@ var menuPages = [
 
 var jsdom = require('jsdom');
 var async = require('async');
+var _ = require('underscore')
 
 async.map(menuPages, function(page, cb) {
   jsdom.env(page, function(err, window) {
@@ -21,13 +22,13 @@ async.map(menuPages, function(page, cb) {
       console.log('warning!', page, 'returned no menu items.');
       return callback(null, [])
     }
-    items.forEach(function(item) {
+    [].forEach.call(items, function(item) {
       var title = item.querySelector('h4 span');
       if (!title) return;
       var menuItem = { name: title.innerText };
       var desc = item.querySelector('p');
       var matchPrice = /(\d+),[\d-]+\s*$/;
-      if (!desc || !desc.innerText.match(matchPrice)) {
+      if (!desc || !desc.innerText || !desc.innerText.match(matchPrice)) {
         menuItem.price = 0;
         collected.push(menuItem);
         return;
@@ -38,7 +39,7 @@ async.map(menuPages, function(page, cb) {
 
       collected.push(menuItem);
     });
-    callback(null, collected);
+    cb(null, collected);
   });
 }, function(err, pageItems) {
   var menu = _.flatten(pageItems);
