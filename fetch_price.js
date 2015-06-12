@@ -12,7 +12,9 @@ var menuPages = [
 var jsdom = require('jsdom');
 var async = require('async');
 var _ = require('underscore')
+var augur = require('augur');
 
+var menu = augur();
 async.map(menuPages, function(page, cb) {
   jsdom.env(page, function(err, window) {
     if (err) return cb();
@@ -42,6 +44,6 @@ async.map(menuPages, function(page, cb) {
   });
 }, function(err, pageItems) {
   var menu = _.flatten(pageItems);
-  console.log(menu);
+  menu(null, pageItems);
 })
 
