@@ -84,15 +84,15 @@ var handlers = {
     if (order == null) return channel.send("i don't see any open order bro");
     async.map(order.orders, function(order, cb) {
       price(order.text, function(e, matches) {
-        if (e) return callback(e);
-        else callback(null, {matches: matches, user:order.user});
+        if (e) return cb(e);
+        else cb(null, {matches: matches, user:order.user});
       });
     }, function(e, orders) {
       if (e) return channel.send('something broke when finding prices. ' + e);
       var found = orders.map(function(o) {
         return o.user + ": " + o.matches.map(function(match) {
           return match.name + ' - ' + match.price + 'kr';
-        }).join(', ') + " + " + (75 / order.orders.length).toFixed(0) + "kr delivery".
+        }).join(', ') + " + " + (75 / order.orders.length).toFixed(0) + "kr delivery";
       }).join('\n');
       channel.send("ok, here's what those orders looked like to me:\n" + found)
     });
