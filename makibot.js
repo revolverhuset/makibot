@@ -129,19 +129,19 @@ var handlers = {
       if (e) return channel.send('something broke when finding prices. ' + e);
       var totalPrice = 0;
       var accounts= {};
-      var users = orders.map(function(o, i) {
+      orders.forEach(function(o, i) {
         var total = o.matches.reduce(function(t, o) { return t + o.price }, 0) + (75/order.orders.length);
         var alias = aliases[o.user] || o.user;
         totalPrice += total;
         accounts[alias] = accounts[alias] ? accounts[alias] + total : total;
-        return js;
       });
-      Object.keys(accounts).map(function(acc) {
+      var users = Object.keys(accounts).map(function(acc, i) {
         return "$('.debets .account_input:eq(" + i + ") input').val('" + acc + "');" +
                "$('.currency.debets .currency_input:eq(" + i + ") input').val('" + accounts[acc] + "');";
       }).join('');
       var total = "$('.credits .account_input:eq(0) input').val('" + args + "');" +
-               "$('.currency.credits .currency_input:eq(0) input').val('" + totalPrice + "');";
+               "$('.currency.credits .currency_input:eq(0) input').val('" + totalPrice + "');" +
+               "$('.debets .currency_input input:first').change();$('.credits .currency_input input:first').change()";
       channel.send('`javascript:' + users + total + '`');
     });
   },
