@@ -3,6 +3,7 @@ var fs = require('fs');
 var token = require('./token.json');
 var async = require('async');
 var price = require('./fetch_price');
+var n2f = require('num2fraction');
 
 var aliases;
 fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
@@ -111,7 +112,7 @@ var handlers = {
         totalPrice += total;
         return o.user + ": " + total.toFixed(0) + "kr (" + o.matches.map(function(match) {
           return match.name + '—' + match.price + 'kr';
-        }).join(', ') + " + " + (75 / order.orders.length).toFixed(0) + "kr delivery)";
+        }).join(', ') + " + " + (75 / order.orders.length).toFixed(1) + "kr delivery)";
       }).join('\n');
       var total = "total: " + totalPrice.toFixed(0) + 'kr';
       channel.send("ok, here's what those orders looked like to me:\n" + found + '\n' + total)
@@ -137,7 +138,7 @@ var handlers = {
       });
       var users = Object.keys(accounts).map(function(acc, i) {
         return "$('.debets .account_input:eq(" + i + ") input').val('" + acc + "');" +
-               "$('.currency.debets .currency_input:eq(" + i + ") input').val('" + accounts[acc] + "');";
+               "$('.currency.debets .currency_input:eq(" + i + ") input').val('" + n2f(accounts[acc]) + "');";
       }).join('');
       var total = "$('.credits .account_input:eq(0) input').val('" + args + "');" +
                "$('.currency.credits .currency_input:eq(0) input').val('" + totalPrice + "');" +
