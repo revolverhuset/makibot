@@ -23,9 +23,9 @@ slack.on('message', function(message) {
   if (!message.text.match(/^fisk!/)) return;
   var channel = slack.getChannelGroupOrDMByID(message.channel);
   var grp = message.text.match(/^fisk!\s+(\w+)\s*(.*)$/, '');
-  if (!grp) return channel.send('dammit helge!')
+  if (!grp) return channel.send('dammit helge!');
   if (!grp[1] || !handlers[grp[1]]) {
-    channel.send('unsupported command! try one of these: ' + Object.keys(handlers).join(', '))
+    channel.send('unsupported command! try one of these: ' + Object.keys(handlers).join(', '));
   } else {
     handlers[grp[1]](channel, message, grp[2]);
   }
@@ -60,7 +60,7 @@ var handlers = {
   summary: function(channel, message, args) {
     if (order == null) return channel.send("there's no open order. open one with 'fisk! openorder'");
     channel.send(order.orders.map(function(order) {
-      return order.user + ": " + order.text
+      return order.user + ": " + order.text;
     }).join('\n'));
   },
   closeorder: function(channel, message) {
@@ -158,13 +158,13 @@ var handlers = {
     } catch (e) {
       return channel.send("bad file: "+e);
     }
-    
+
     order = data;
     handlers.summary(channel, message);
   }
 }
 
-slack.on('error', function(err) { console.log(err) });
+slack.on('error', function(err) { console.log(err); });
 
 function createOrder(channel, message, user, text) {
   if (order == null) return channel.send("there's no open order. open one with 'fisk! openorder'");
@@ -179,7 +179,7 @@ function createOrder(channel, message, user, text) {
   var newOrder = {user: user || "unnamed user", text: text};
   order.orders.push(newOrder);
   channel.send("added an order for " + user + ": " + newOrder.text);
-  saveorder()
+  saveorder();
 }
 
 function changeOrder(channel, message, user, sub) {
@@ -202,8 +202,8 @@ function changeOrder(channel, message, user, sub) {
     channel.send('order for ' + user + ' changed to: ' + order.text);
   });
   if (!didFindAMatch) channel.send("didn't find an order for " + user + " to change");
-  saveorder()
+  saveorder();
 }
 
 
-slack.login()
+slack.login();
