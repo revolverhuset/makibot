@@ -3,9 +3,20 @@ var fs = require('fs');
 // var token = require('./token.json');
 var async = require('async');
 var price = require('./fetch_price');
-//var n2f = require('num2fraction');
+var request = require('request');
 
 var DELIVERY_COST = 75;
+
+function ISODateString(d){
+  function pad(n){return n<10 ? '0'+n : n;}
+  return d.getUTCFullYear()+'-'
+    + pad(d.getUTCMonth()+1)+'-'
+    + pad(d.getUTCDate())+'T'
+    + pad(d.getUTCHours())+':'
+    + pad(d.getUTCMinutes())+':'
+    + pad(d.getUTCSeconds())+'.'
+    + pad(d.getUTCMilliseconds())+'Z';
+};
 
 var aliases;
 fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
@@ -112,14 +123,14 @@ var handlers = {
       if (e) return channel.send('something broke when finding prices. ' + e);
       var totalPrice = 0;
       var found = orders.map(function(o) {
-        var total = o.matches.reduce(function(t, o) { return t + o.price }, 0) + (DELIVERY_COST/order.orders.length);
+        var total = o.matches.reduce(function(t, o) { return t + o.price; }, 0) + (DELIVERY_COST/order.orders.length);
         totalPrice += total;
-        return o.user + ": " + total.toFixed(0) + "kr (" + o.matches.map(function(match) {
-          return match.name + '—' + match.price + 'kr';
-        }).join(', ') + " + " + (DELIVERY_COST / order.orders.length).toFixed(1) + "kr delivery)";
+        return o.user + ": " + total.toFixed(0) + "kr | " + o.matches.map(function(match) {
+          return match.name + ' @ ' + match.price + 'kr';
+        }).join(' + ') + " + " + (DELIVERY_COST / order.orders.length).toFixed(1) + "kr delivery";
       }).join('\n');
-      var total = "total: " + totalPrice.toFixed(0) + 'kr';
-      channel.send("ok, here's what those orders looked like to me:\n" + found + '\n' + total)
+      var total = "Total: " + totalPrice.toFixed(0) + 'kr';
+      channel.send("ok, here's what those orders looked like to me:\n" + found + '\n' + total);
     });
   },
   sharebill: function(channel, message, args) {
@@ -132,25 +143,75 @@ var handlers = {
       });
     }, function(e, orders) {
       if (e) return channel.send('something broke when finding prices. ' + e);
-      var totalPrice = 0;
-      var accounts= {};
-      orders.forEach(function(o, i) {
-        var total = o.matches.reduce(function(t, o) { return t + o.price; }, 0);
-        var alias = aliases[o.user] || o.user;
-        totalPrice += total;
-        accounts[alias] = accounts[alias] ? accounts[alias] + total : total;
+      var body = '';
+      var req = request('http://sharebill.qpgc.org/_view/totals?group=true&group_level=1', function(error, res, body) {
+        if (error || res.statusCode != 200) {
+          return channel.send('Failed to get users from sharebill');
+        }
+
+        try {
+          var users = (JSON.parse(body)).rows.map(function(o) { return o.key[0]; });
+        } catch(e) {
+          return channel.send('Failed to parse sharebill users.');
+        }
+
+        var totalPrice = DELIVERY_COST;
+        var accounts = {};
+        orders.forEach(function(o, i) {
+          var total = o.matches.reduce(function(t, o) { return t + o.price; }, 0);
+          var alias = aliases[o.user] || o.user;
+          totalPrice += total;
+          accounts[alias] = accounts[alias] ? accounts[alias] + total : total;
+        });
+
+        var invalid = Object.keys(accounts).filter(function(i) {
+          return users.indexOf(i) == -1;
+        });
+
+        if (invalid.length > 0) {
+          return channel.send(invalid.length===1
+            ? 'Missing alias for the following user '+invalid.join(', ')
+            : 'Missing aliases for the following users '+invalid.join(', '));
+        }
+
+        if (users.indexOf(args) === -1) {
+          return channel.send('Invalid payment id '+args);
+        }
+
+        // Total is simply built as a string to preserve the fraction.
+        Object.keys(accounts).map(function(key, idx) {
+            accounts[key] = '' + accounts[key] + ' '+DELIVERY_COST+'/'+order.orders.length;
+        });
+
+        var contents = {
+          'meta' : {
+            'description' : 'MakiBot 9000',
+            'timestamp' : ISODateString(new Date())
+          },
+          'transaction' : {
+            'debets' : accounts,
+            'credits' : {
+            }
+          }
+        };
+
+        contents.transaction.credits[args] = totalPrice;
+        var post = request.post({
+          url : 'http://sharebill.qpgc.org/the_database/',
+          body : contents,
+          json : true
+        }, function (err, res, body) {
+          if (err || res.statusCode >= 400) {
+            return channel.send('Failed to post bill to sharebill');
+          } else {
+              // Let's pretend I did this properly.
+            var ret = 'http://sharebill.qpgc.org/post/'+body.id;
+            handlers.closeorder(channel, message);
+            return channel.send('Posted to sharebill '+ret);
+          }
+        });
+        return post;
       });
-
-      totalPrice+=DELIVERY_COST;
-
-      var users = Object.keys(accounts).map(function(acc, i) {
-        return "$('.debets .account_input:eq(" + i + ") input').val('" + acc + "');" +
-               "$('.currency.debets .currency_input:eq(" + i + ") input').val('" + accounts[acc] + " "+DELIVERY_COST+"/"+order.orders.length+"');";
-      }).join('');
-      var total = "$('.credits .account_input:eq(0) input').val('" + args + "');" +
-               "$('.currency.credits .currency_input:eq(0) input').val('" + totalPrice + "');" +
-               "$('.debets .currency_input input:first').change();$('.credits .currency_input input:first').change()";
-      channel.send('`javascript:' + users + total + '`');
     });
   },
   load: function(channel, message, args) {
