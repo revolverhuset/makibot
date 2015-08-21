@@ -3,7 +3,20 @@ var fs = require('fs');
 var token = require('./token.json');
 var async = require('async');
 var price = require('./fetch_price');
-var n2f = require('num2fraction');
+var request = require('request');
+
+var DELIVERY_COST = 75;
+
+function ISODateString(d){
+  function pad(n){return n<10 ? '0'+n : n;}
+  return d.getUTCFullYear()+'-'
+    + pad(d.getUTCMonth()+1)+'-'
+    + pad(d.getUTCDate())+'T'
+    + pad(d.getUTCHours())+':'
+    + pad(d.getUTCMinutes())+':'
+    + pad(d.getUTCSeconds())+'.'
+    + pad(d.getUTCMilliseconds())+'Z';
+};
 
 var aliases;
 fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
@@ -13,7 +26,8 @@ fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
     return;
   }
   aliases = JSON.parse(datas);
-})
+});
+
 var slack = new Slack(token, true, true);
 
 var order = undefined;
@@ -23,9 +37,9 @@ slack.on('message', function(message) {
   if (!message.text.match(/^fisk!/)) return;
   var channel = slack.getChannelGroupOrDMByID(message.channel);
   var grp = message.text.match(/^fisk!\s+(\w+)\s*(.*)$/, '');
-  if (!grp) return channel.send('dammit helge!')
+  if (!grp) return channel.send('dammit helge!');
   if (!grp[1] || !handlers[grp[1]]) {
-    channel.send('unsupported command! try one of these: ' + Object.keys(handlers).join(', '))
+    channel.send('unsupported command! try one of these: ' + Object.keys(handlers).join(', '));
   } else {
     handlers[grp[1]](channel, message, grp[2]);
   }
@@ -60,7 +74,7 @@ var handlers = {
   summary: function(channel, message, args) {
     if (order == null) return channel.send("there's no open order. open one with 'fisk! openorder'");
     channel.send(order.orders.map(function(order) {
-      return order.user + ": " + order.text
+      return order.user + ": " + order.text;
     }).join('\n'));
   },
   closeorder: function(channel, message) {
@@ -98,6 +112,7 @@ var handlers = {
     saveorder();
   },
   pricecheck: function(channel, message, args) {
+      //https://couch.qpgc.org/sharebill/_design/sharebill/_view/totals?group=true&group_level=1
     if (order == null) return channel.send("i don't see any open order bro");
     async.map(order.orders, function(order, cb) {
       price(order.text, function(e, matches) {
@@ -108,14 +123,14 @@ var handlers = {
       if (e) return channel.send('something broke when finding prices. ' + e);
       var totalPrice = 0;
       var found = orders.map(function(o) {
-        var total = o.matches.reduce(function(t, o) { return t + o.price }, 0) + (75/order.orders.length);
+        var total = o.matches.reduce(function(t, o) { return t + o.price; }, 0) + (DELIVERY_COST/order.orders.length);
         totalPrice += total;
-        return o.user + ": " + total.toFixed(0) + "kr (" + o.matches.map(function(match) {
-          return match.name + '—' + match.price + 'kr';
-        }).join(', ') + " + " + (75 / order.orders.length).toFixed(1) + "kr delivery)";
+        return o.user + ": " + total.toFixed(0) + "kr | " + o.matches.map(function(match) {
+          return match.name + ' @ ' + match.price + 'kr';
+        }).join(' + ') + " + " + (DELIVERY_COST / order.orders.length).toFixed(1) + "kr delivery";
       }).join('\n');
-      var total = "total: " + totalPrice.toFixed(0) + 'kr';
-      channel.send("ok, here's what those orders looked like to me:\n" + found + '\n' + total)
+      var total = "Total: " + totalPrice.toFixed(0) + 'kr';
+      channel.send("ok, here's what those orders looked like to me:\n" + found + '\n' + total);
     });
   },
   sharebill: function(channel, message, args) {
@@ -128,22 +143,78 @@ var handlers = {
       });
     }, function(e, orders) {
       if (e) return channel.send('something broke when finding prices. ' + e);
-      var totalPrice = 0;
-      var accounts= {};
-      orders.forEach(function(o, i) {
-        var total = o.matches.reduce(function(t, o) { return t + o.price }, 0) + (75/order.orders.length);
-        var alias = aliases[o.user] || o.user;
-        totalPrice += total;
-        accounts[alias] = accounts[alias] ? accounts[alias] + total : total;
+      if (!orders || orders.length === 0) {
+        return channel.send('No orders to sharebill.');
+      }
+      var body = '';
+      var req = request('http://sharebill.qpgc.org/_view/totals?group=true&group_level=1', function(error, res, body) {
+        if (error || res.statusCode != 200) {
+          return channel.send('Failed to get users from sharebill');
+        }
+
+        try {
+          var users = (JSON.parse(body)).rows.map(function(o) { return o.key[0]; });
+        } catch(e) {
+          return channel.send('Failed to parse sharebill users.');
+        }
+
+        var totalPrice = DELIVERY_COST;
+        var accounts = {};
+        orders.forEach(function(o, i) {
+          var total = o.matches.reduce(function(t, o) { return t + o.price; }, 0);
+          var alias = aliases[o.user] || o.user;
+          totalPrice += total;
+          accounts[alias] = accounts[alias] ? accounts[alias] + total : total;
+        });
+
+        var invalid = Object.keys(accounts).filter(function(i) {
+          return users.indexOf(i) == -1;
+        });
+
+        if (invalid.length > 0) {
+          return channel.send(invalid.length===1
+            ? 'Missing alias for the following user '+invalid.join(', ')
+            : 'Missing aliases for the following users '+invalid.join(', '));
+        }
+
+        if (users.indexOf(args) === -1) {
+          return channel.send('Invalid payment id '+args);
+        }
+
+        // Total is simply built as a string to preserve the fraction.
+        Object.keys(accounts).map(function(key, idx) {
+            accounts[key] = '' + accounts[key] + ' '+DELIVERY_COST+'/'+order.orders.length;
+        });
+
+        var contents = {
+          'meta' : {
+            'description' : 'MakiBot 9000',
+            'timestamp' : ISODateString(new Date())
+          },
+          'transaction' : {
+            'debets' : accounts,
+            'credits' : {
+            }
+          }
+        };
+
+        contents.transaction.credits[args] = totalPrice;
+        var post = request.post({
+          url : 'http://sharebill.qpgc.org/the_database/',
+          body : contents,
+          json : true
+        }, function (err, res, body) {
+          if (err || res.statusCode >= 400) {
+            return channel.send('Failed to post bill to sharebill');
+          } else {
+              // Let's pretend I did this properly.
+            var ret = 'http://sharebill.qpgc.org/post/'+body.id;
+            handlers.closeorder(channel, message);
+            return channel.send('Posted to sharebill '+ret);
+          }
+        });
+        return post;
       });
-      var users = Object.keys(accounts).map(function(acc, i) {
-        return "$('.debets .account_input:eq(" + i + ") input').val('" + acc + "');" +
-               "$('.currency.debets .currency_input:eq(" + i + ") input').val('" + n2f(accounts[acc]) + "');";
-      }).join('');
-      var total = "$('.credits .account_input:eq(0) input').val('" + args + "');" +
-               "$('.currency.credits .currency_input:eq(0) input').val('" + totalPrice + "');" +
-               "$('.debets .currency_input input:first').change();$('.credits .currency_input input:first').change()";
-      channel.send('`javascript:' + users + total + '`');
     });
   },
   load: function(channel, message, args) {
@@ -158,13 +229,13 @@ var handlers = {
     } catch (e) {
       return channel.send("bad file: "+e);
     }
-    
+
     order = data;
     handlers.summary(channel, message);
   }
 }
 
-slack.on('error', function(err) { console.log(err) });
+slack.on('error', function(err) { console.log(err); });
 
 function createOrder(channel, message, user, text) {
   if (order == null) return channel.send("there's no open order. open one with 'fisk! openorder'");
@@ -179,7 +250,7 @@ function createOrder(channel, message, user, text) {
   var newOrder = {user: user || "unnamed user", text: text};
   order.orders.push(newOrder);
   channel.send("added an order for " + user + ": " + newOrder.text);
-  saveorder()
+  saveorder();
 }
 
 function changeOrder(channel, message, user, sub) {
@@ -202,8 +273,8 @@ function changeOrder(channel, message, user, sub) {
     channel.send('order for ' + user + ' changed to: ' + order.text);
   });
   if (!didFindAMatch) channel.send("didn't find an order for " + user + " to change");
-  saveorder()
+  saveorder();
 }
 
 
-slack.login()
+slack.login();
