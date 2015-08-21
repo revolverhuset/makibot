@@ -143,6 +143,9 @@ var handlers = {
       });
     }, function(e, orders) {
       if (e) return channel.send('something broke when finding prices. ' + e);
+      if (!orders || orders.length === 0) {
+        return channel.send('No orders to sharebill.');
+      }
       var body = '';
       var req = request('http://sharebill.qpgc.org/_view/totals?group=true&group_level=1', function(error, res, body) {
         if (error || res.statusCode != 200) {
