@@ -3,20 +3,9 @@ var fs = require('fs');
 var token = require('./token.json');
 var async = require('async');
 var price = require('./fetch_price');
-var request = require('request');
+var sharebill = require('./sharebill');
 
 var DELIVERY_COST = 75;
-
-function ISODateString(d){
-  function pad(n){return n<10 ? '0'+n : n;}
-  return d.getUTCFullYear()+'-'
-    + pad(d.getUTCMonth()+1)+'-'
-    + pad(d.getUTCDate())+'T'
-    + pad(d.getUTCHours())+':'
-    + pad(d.getUTCMinutes())+':'
-    + pad(d.getUTCSeconds())+'.'
-    + pad(d.getUTCMilliseconds())+'Z';
-};
 
 var aliases;
 fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
@@ -146,74 +135,27 @@ var handlers = {
       if (!orders || orders.length === 0) {
         return channel.send('No orders to sharebill.');
       }
-      var body = '';
-      var req = request('http://sharebill.qpgc.org/_view/totals?group=true&group_level=1', function(error, res, body) {
-        if (error || res.statusCode != 200) {
-          return channel.send('Failed to get users from sharebill');
+
+      var totalPrice = DELIVERY_COST;
+      var accounts = {};
+      orders.forEach(function(o, i) {
+        var total = o.matches.reduce(function(t, o) { return t + o.price; }, 0);
+        var alias = aliases[o.user] || o.user;
+        totalPrice += total;
+        accounts[alias] = accounts[alias] ? accounts[alias] + total : total;
+      });
+
+      // Total is simply built as a string to preserve the fraction.
+      Object.keys(accounts).map(function(key, idx) {
+        accounts[key] = '' + accounts[key] + ' '+DELIVERY_COST+'/'+order.orders.length;
+      });
+
+      return sharebill(accounts, totalPrice, args, function(error, result) {
+        if (error) {
+          return channel.send(error);
         }
-
-        try {
-          var users = (JSON.parse(body)).rows.map(function(o) { return o.key[0]; });
-        } catch(e) {
-          return channel.send('Failed to parse sharebill users.');
-        }
-
-        var totalPrice = DELIVERY_COST;
-        var accounts = {};
-        orders.forEach(function(o, i) {
-          var total = o.matches.reduce(function(t, o) { return t + o.price; }, 0);
-          var alias = aliases[o.user] || o.user;
-          totalPrice += total;
-          accounts[alias] = accounts[alias] ? accounts[alias] + total : total;
-        });
-
-        var invalid = Object.keys(accounts).filter(function(i) {
-          return users.indexOf(i) == -1;
-        });
-
-        if (invalid.length > 0) {
-          return channel.send(invalid.length===1
-            ? 'Missing alias for the following user '+invalid.join(', ')
-            : 'Missing aliases for the following users '+invalid.join(', '));
-        }
-
-        if (users.indexOf(args) === -1) {
-          return channel.send('Invalid payment id '+args);
-        }
-
-        // Total is simply built as a string to preserve the fraction.
-        Object.keys(accounts).map(function(key, idx) {
-            accounts[key] = '' + accounts[key] + ' '+DELIVERY_COST+'/'+order.orders.length;
-        });
-
-        var contents = {
-          'meta' : {
-            'description' : 'MakiBot 9000',
-            'timestamp' : ISODateString(new Date())
-          },
-          'transaction' : {
-            'debets' : accounts,
-            'credits' : {
-            }
-          }
-        };
-
-        contents.transaction.credits[args] = totalPrice;
-        var post = request.post({
-          url : 'http://sharebill.qpgc.org/the_database/',
-          body : contents,
-          json : true
-        }, function (err, res, body) {
-          if (err || res.statusCode >= 400) {
-            return channel.send('Failed to post bill to sharebill');
-          } else {
-              // Let's pretend I did this properly.
-            var ret = 'http://sharebill.qpgc.org/post/'+body.id;
-            handlers.closeorder(channel, message);
-            return channel.send('Posted to sharebill '+ret);
-          }
-        });
-        return post;
+        handlers.closeorder(channel, message);
+        return channel.send('Posted to sharebill '+result);
       });
     });
   },
