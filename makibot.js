@@ -1,9 +1,11 @@
 var Slack = require('slack-client');
 var fs = require('fs');
-var token = require('./token.json');
+// var token = require('./token.json');
 var async = require('async');
 var price = require('./fetch_price');
-var n2f = require('num2fraction');
+//var n2f = require('num2fraction');
+
+var DELIVERY_COST = 75;
 
 var aliases;
 fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
@@ -13,8 +15,9 @@ fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
     return;
   }
   aliases = JSON.parse(datas);
-})
-var slack = new Slack(token, true, true);
+});
+
+var slack = new Slack('xoxb-9491714853-gDfdv373yIyPqPo2jTsIRLUV', true, true);//token, true, true);
 
 var order = undefined;
 
@@ -98,6 +101,7 @@ var handlers = {
     saveorder();
   },
   pricecheck: function(channel, message, args) {
+      //https://couch.qpgc.org/sharebill/_design/sharebill/_view/totals?group=true&group_level=1
     if (order == null) return channel.send("i don't see any open order bro");
     async.map(order.orders, function(order, cb) {
       price(order.text, function(e, matches) {
@@ -108,11 +112,11 @@ var handlers = {
       if (e) return channel.send('something broke when finding prices. ' + e);
       var totalPrice = 0;
       var found = orders.map(function(o) {
-        var total = o.matches.reduce(function(t, o) { return t + o.price }, 0) + (75/order.orders.length);
+        var total = o.matches.reduce(function(t, o) { return t + o.price }, 0) + (DELIVERY_COST/order.orders.length);
         totalPrice += total;
         return o.user + ": " + total.toFixed(0) + "kr (" + o.matches.map(function(match) {
           return match.name + '—' + match.price + 'kr';
-        }).join(', ') + " + " + (75 / order.orders.length).toFixed(1) + "kr delivery)";
+        }).join(', ') + " + " + (DELIVERY_COST / order.orders.length).toFixed(1) + "kr delivery)";
       }).join('\n');
       var total = "total: " + totalPrice.toFixed(0) + 'kr';
       channel.send("ok, here's what those orders looked like to me:\n" + found + '\n' + total)
@@ -131,14 +135,17 @@ var handlers = {
       var totalPrice = 0;
       var accounts= {};
       orders.forEach(function(o, i) {
-        var total = o.matches.reduce(function(t, o) { return t + o.price }, 0) + (75/order.orders.length);
+        var total = o.matches.reduce(function(t, o) { return t + o.price; }, 0);
         var alias = aliases[o.user] || o.user;
         totalPrice += total;
         accounts[alias] = accounts[alias] ? accounts[alias] + total : total;
       });
+
+      totalPrice+=DELIVERY_COST;
+
       var users = Object.keys(accounts).map(function(acc, i) {
         return "$('.debets .account_input:eq(" + i + ") input').val('" + acc + "');" +
-               "$('.currency.debets .currency_input:eq(" + i + ") input').val('" + n2f(accounts[acc]) + "');";
+               "$('.currency.debets .currency_input:eq(" + i + ") input').val('" + accounts[acc] + " "+DELIVERY_COST+"/"+order.orders.length+"');";
       }).join('');
       var total = "$('.credits .account_input:eq(0) input').val('" + args + "');" +
                "$('.currency.credits .currency_input:eq(0) input').val('" + totalPrice + "');" +

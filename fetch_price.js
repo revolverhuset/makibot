@@ -11,7 +11,7 @@ var menuPages = [
 
 var jsdom = require('jsdom');
 var async = require('async');
-var _ = require('underscore')
+var _ = require('underscore');
 var augur = require('augur');
 var similarity = require('string-similarity');
 
