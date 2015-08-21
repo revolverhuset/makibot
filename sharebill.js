@@ -30,18 +30,13 @@ function postBill(debits, total, payid, callback) {
   getUsers(function(err, users) {
     if (err) return callback(err);
 
-    console.log(users);
-    console.log(users.indexOf(payid));
-    console.log(payid);
     if (users.indexOf(payid) === -1) {
-      console.log('Uhm, callback?');
       return callback('Invalid payment id '+payid);
     }
 
     var invalid = Object.keys(debits).filter(function(i) {
       return users.indexOf(i) === -1;
     });
-    console.log(invalid);
 
     if (invalid.length > 0) {
       return callback(invalid.length===1
