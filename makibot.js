@@ -1,6 +1,6 @@
 var Slack = require('slack-client');
 var fs = require('fs');
-// var token = require('./token.json');
+var token = require('./token.json');
 var async = require('async');
 var price = require('./fetch_price');
 var request = require('request');
@@ -28,7 +28,7 @@ fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
   aliases = JSON.parse(datas);
 });
 
-var slack = new Slack('xoxb-9491714853-gDfdv373yIyPqPo2jTsIRLUV', true, true);//token, true, true);
+var slack = new Slack(token, true, true);
 
 var order = undefined;
 
