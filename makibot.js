@@ -26,7 +26,7 @@ slack.on('message', function(message) {
   if (!message.text.match(/^fisk!/)) return;
   var channel = slack.getChannelGroupOrDMByID(message.channel);
   var grp = message.text.match(/^fisk!\s+(\w+)\s*(.*)$/, '');
-  if (!grp) return channel.send('dammit helge!');
+  if (!grp) return channel.send('🐱');
   if (!grp[1] || !handlers[grp[1]]) {
     channel.send('unsupported command! try one of these: ' + Object.keys(handlers).join(', '));
   } else {
