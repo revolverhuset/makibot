@@ -55,7 +55,7 @@ function postBill(debits, total, payid, callback) {
         }
       }
     };
-    contents.transaction.credits[payid] = total;
+    contents.transaction.credits[payid] = ''+total;
 
     return request.post({
       url : 'http://sharebill.qpgc.org/the_database/',
