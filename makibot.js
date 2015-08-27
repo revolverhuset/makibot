@@ -23,9 +23,9 @@ var order = undefined;
 
 slack.on('message', function(message) {
   if (!message.text) return;
-  if (!message.text.match(/^(fisk|helge)!/)) return;
+  if (!message.text.match(/^(f\w*k|helge)!/)) return;
   var channel = slack.getChannelGroupOrDMByID(message.channel);
-  var grp = message.text.match(/^(fisk|helge)!\s+(\w+)\s*(.*)$/, '');
+  var grp = message.text.match(/^(f\w*k|helge)!\s+(\w+)\s*(.*)$/, '');
   if (!grp) return channel.send(':joearmcat:');
   if (!grp[2] || !handlers[grp[2]]) {
     channel.send('unsupported command! try one of these: ' + Object.keys(handlers).join(', '));
