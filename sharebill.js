@@ -63,7 +63,7 @@ function postBill(debits, total, payid, callback) {
       json : true
     }, function (err, res, body) {
       if (err || res.statusCode >= 400) {
-        return callback('Failed to post bill to sharebill');
+        return callback('Failed to post bill to sharebill - ' + (err || JSON.stringify({code: res.statusCode, body: body})));
       } else {
         // Let's pretend I did this properly.
         var ret = 'http://sharebill.qpgc.org/post/'+body.id;
