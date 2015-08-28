@@ -90,7 +90,7 @@ var handlers = {
     price.searchMatches(args, function(e, result) {
       if (e || result.length == 0) return channel.send("no matches")
       channel.send(result.map(function(item) {
-        return item.name + ' (' + item.price + ')'
+        return item.name + ' (' + item.price + 'kr)'
       }).join('\n'))
     });
   },
