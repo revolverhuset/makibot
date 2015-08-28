@@ -59,11 +59,23 @@ function fetchPriceForItem(fetchPriceFor, callback) {
 };
 
 var splitters = ['og','and',',','&','+'];
-module.exports = function fetchMatchesForOrder(order, callback) {
-  var parts = order.split(/(og|and|[,&+])\s/).filter(function(p) {
-    return splitters.indexOf(p) == -1 && !!p && !!p.trim();
-  });
-  async.map(parts, function(part, cb) {
-    fetchPriceForItem(part, cb)
-  }, callback)
+module.exports = {
+  fetchMatchesForOrder: function(order, callback) {
+    var parts = order.split(/(og|and|[,&+])\s/).filter(function(p) {
+      return splitters.indexOf(p) == -1 && !!p && !!p.trim();
+    });
+    async.map(parts, function(part, cb) {
+      fetchPriceForItem(part, cb)
+    }, callback)
+  },
+  searchMatches: function(query, callback) {
+    menu.then(function(e, menu) {
+      var results = menu.filter(function(menuItem) {
+        menuItem.distance = similarity.compareTwoStrings(query, menuItem.name);
+        return menuItem.distance > 0.35
+      })
+      results = _.sortBy(results, function(item) { return item.distance });
+      callback(null, results)
+    });
+  }
 }
