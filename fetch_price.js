@@ -71,6 +71,7 @@ module.exports = {
   searchMatches: function(query, callback) {
     menu.then(function(e, menu) {
       var results = menu.filter(function(menuItem) {
+        if (!menuItem) return false;
         menuItem.distance = similarity.compareTwoStrings(query, menuItem.name);
         return menuItem.distance > 0.35
       })
