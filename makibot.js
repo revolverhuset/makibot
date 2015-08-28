@@ -85,6 +85,15 @@ var handlers = {
     if (!user) return;
     changeOrder(channel, message, user.name, args);
   },
+  search: function(channel, message, args) {
+    if (!args) return channel.send("usage: fisk! search <term>");
+    price.searchMatches(args, function(e, result) {
+      if (e || result.length == 0) return channel.send("no matches")
+      channel.send(result.map(function(item) {
+        return item.name + ' (' + item.price + ')'
+      }).join('\n'))
+    });
+  },
   remove: function(channel, message, args) {
     if (!message.user && !args) return channel.send("hæ?!");
     if (order == null) return channel.send("i don't see any open order bro");
@@ -104,7 +113,7 @@ var handlers = {
       //https://couch.qpgc.org/sharebill/_design/sharebill/_view/totals?group=true&group_level=1
     if (order == null) return channel.send("i don't see any open order bro");
     async.map(order.orders, function(order, cb) {
-      price(order.text, function(e, matches) {
+      price.fetchMatchesForOrder(order.text, function(e, matches) {
         if (e) return cb(e);
         else cb(null, {matches: matches, user:order.user});
       });
@@ -126,7 +135,7 @@ var handlers = {
     if (order == null) return channel.send("i don't see any open order bro");
     if (!args) return channel.send('usage: fisk! sharebill <payer id>');
     async.map(order.orders, function(order, cb) {
-      price(order.text, function(e, matches) {
+      price.fetchMatchesForOrder(order.text, function(e, matches) {
         if (e) return cb(e);
         else cb(null, {matches: matches, user:order.user});
       });
