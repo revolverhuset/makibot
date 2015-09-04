@@ -68,6 +68,9 @@ module.exports = {
       fetchPriceForItem(part, cb)
     }, callback)
   },
+  bestMatch: function(query, callback) {
+    fetchPriceForItem(query, callback);
+  },
   searchMatches: function(query, callback) {
     menu.then(function(e, menu) {
       var results = menu.filter(function(menuItem) {
