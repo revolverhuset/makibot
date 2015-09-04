@@ -4,6 +4,7 @@ var token = require('./token.json');
 var async = require('async');
 var price = require('./fetch_price');
 var sharebill = require('./sharebill');
+var _ = require('underscore');
 
 var DELIVERY_COST = 75;
 
@@ -178,7 +179,15 @@ var handlers = {
   load: function(channel, message, args) {
     if (order != null) return channel.send("there's an order open already. close if it first");
     var exists = fs.existsSync(__dirname + '/' + args);
-    if (!exists) return channel.send("couldn't find file " + args);
+    if (!exists) {
+      var query = parseInt(args);
+      if (isNaN(args) || args >= 1) return channel.send("couldn't find file " + args);
+
+      var files = fs.readdirSync(__dirname);
+      files = files.filter(function(f) { return !!f.match(/^order_\d+\.json/) }).sort().reverse();
+      args = files[Math.abs(query)];
+      if (args == null) return channel.send("there are only " + files.length + " saved orders");
+    }
     var file = fs.readFileSync(__dirname + '/' + args, 'utf8');
     var data;
     try {
