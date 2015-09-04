@@ -94,6 +94,13 @@ var handlers = {
       }).join('\n'))
     });
   },
+  match: function(channel, message, args) {
+    if (!args) return channel.send("usage: fisk! match <term>");
+    price.bestMatch(args, function(e, result) {
+      if (e || result == null) return channel.send("no matches")
+      channel.send("matched: \"" + result.name + "\" (price: " + result.price + "kr, distance: " + result.distance +")")
+    });
+  },
   remove: function(channel, message, args) {
     if (!message.user && !args) return channel.send("hæ?!");
     if (order == null) return channel.send("i don't see any open order bro");
