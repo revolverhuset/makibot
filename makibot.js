@@ -98,7 +98,7 @@ var handlers = {
     if (!args) return channel.send("usage: fisk! match <term>");
     price.bestMatch(args, function(e, result) {
       if (e || result == null) return channel.send("no matches")
-      channel.send("matched: \"" + result.name + "\" (price: " + result.price + "kr, distance: " + result.distance +")")
+      channel.send("matched: \"" + result.name + "\" (price: " + result.price + "kr, distance: " + result.distance.toFixed(2) +")")
     });
   },
   remove: function(channel, message, args) {
