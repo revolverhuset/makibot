@@ -61,7 +61,7 @@ var handlers = {
     var user = split[0];
     createOrder(channel, message, user, split.slice(1).join(' '));
   },
-  summary: function(channel, message, args) {
+  rawsummary: function(channel, message, args) {
     if (order == null) return channel.send("there's no open order. open one with 'fisk! openorder'");
     channel.send(order.orders.map(function(order) {
       return order.user + ": " + order.text;
@@ -117,7 +117,7 @@ var handlers = {
     channel.send("removed " + (count-newCount) + " orders matching '" + args + "'");
     saveorder();
   },
-  pricecheck: function(channel, message, args) {
+  summary: function(channel, message, args) {
       //https://couch.qpgc.org/sharebill/_design/sharebill/_view/totals?group=true&group_level=1
     if (order == null) return channel.send("i don't see any open order bro");
     async.map(order.orders, function(order, cb) {
