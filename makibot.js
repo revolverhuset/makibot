@@ -200,7 +200,10 @@ function createOrder(channel, message, user, text) {
   if (didUpdateOrder) return;
   var newOrder = {user: user || "unnamed user", text: text};
   order.orders.push(newOrder);
-  channel.send("added an order for " + user + ": " + newOrder.text);
+  price.fetchMatchesForOrder(newOrder.text, function(e, matches) {
+    var matchString = matches.map(function(m) { return m.name }).join(', ');
+    channel.send("added an order for " + user + ": " + newOrder.text + " (matched: " + matchString + ")");
+  });
   saveorder();
 }
 
@@ -221,7 +224,10 @@ function changeOrder(channel, message, user, sub) {
     if (order.user != user) return;
     didFindAMatch = true;
     order.text = order.text.replace(matcher, submatch[2]);
-    channel.send('order for ' + user + ' changed to: ' + order.text);
+    price.fetchMatchesForOrder(order.text, function(e, matches) {
+      var matchString = matches.map(function(m) { return m.name }).join(', ');
+      channel.send('order for ' + user + ' changed to: ' + order.text + " (matched: " + matchString + ")");
+    });
   });
   if (!didFindAMatch) channel.send("didn't find an order for " + user + " to change");
   saveorder();
