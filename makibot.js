@@ -5,6 +5,7 @@ var async = require('async');
 var price = require('./fetch_price');
 var sharebill = require('./sharebill');
 var _ = require('underscore');
+var SlackMessage = require('slack-client/src/message');
 
 var DELIVERY_COST = 75;
 
@@ -119,7 +120,6 @@ var handlers = {
     saveorder();
   },
   summary: function(channel, message, args) {
-      //https://couch.qpgc.org/sharebill/_design/sharebill/_view/totals?group=true&group_level=1
     if (order == null) return channel.send("i don't see any open order bro");
     async.map(order.orders, function(order, cb) {
       price.fetchMatchesForOrder(order.text, function(e, matches) {
@@ -132,12 +132,13 @@ var handlers = {
       var found = orders.map(function(o) {
         var total = o.matches.reduce(function(t, o) { return t + o.price; }, 0) + (DELIVERY_COST/order.orders.length);
         totalPrice += total;
-        return o.user + ": " + total.toFixed(0) + "kr | " + o.matches.map(function(match) {
+        return o.user[0] + '\u200B' + o.user.slice(1) + ": " + total.toFixed(0) + "kr | " + o.matches.map(function(match) {
           return match.name + ' @ ' + match.price + 'kr';
         }).join(' + ') + " + " + (DELIVERY_COST / order.orders.length).toFixed(1) + "kr delivery";
       }).join('\n');
       var total = "Total: " + totalPrice.toFixed(0) + 'kr';
-      channel.send("ok, here's what those orders looked like to me:\n" + found + '\n' + total);
+      var messageText = "ok, here's what those orders looked like to me:\n" + found + '\n' + total;
+      channel.send(messageText);
     });
   },
   sharebill: function(channel, message, args) {
