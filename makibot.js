@@ -157,16 +157,19 @@ var handlers = {
 
       var totalPrice = DELIVERY_COST;
       var accounts = {};
+      var accountOccurances = {};
       orders.forEach(function(o, i) {
         var total = o.matches.reduce(function(t, o) { return t + o.price; }, 0);
         var alias = aliases[o.user] || o.user;
         totalPrice += total;
+        accountOccurances[alias] = accountOccurances[alias] ? accountOccurances[alias] + 1 : 1;
         accounts[alias] = accounts[alias] ? accounts[alias] + total : total;
       });
 
       // Total is simply built as a string to preserve the fraction.
       Object.keys(accounts).map(function(key, idx) {
-        accounts[key] = '' + accounts[key] + ' '+DELIVERY_COST+'/'+order.orders.length;
+        
+        accounts[key] = '' + accounts[key] + ' '+ (DELIVERY_COST * accountOccurances[alias])+'/'+order.orders.length;
       });
 
       return sharebill(accounts, totalPrice, args, function(error, result) {

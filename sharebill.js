@@ -8,7 +8,7 @@ function getUsers(callback) {
     }
 
     try {
-      return callback(null, (JSON.parse(body)).rows.map(function(o) { return o.key[0]; }));
+      return callback(null, JSON.parse(body).rows.map(function(o) { return o.key[0]; }));
     } catch(e) {
       return callback('Failed to parse sharebill users.');
     }
