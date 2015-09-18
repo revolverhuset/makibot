@@ -63,6 +63,9 @@ var handlers = {
     var user = split[0];
     createOrder(channel, message, user, split.slice(1).join(' '));
   },
+  nettbestilling : function(channel, message, args) {
+    channel.send('Nettbestilling kommer snart!');
+  },
   rawsummary: function(channel, message, args) {
     if (order == null) return channel.send("there's no open order. open one with 'fisk! openorder'");
     channel.send(order.orders.map(function(order) {
