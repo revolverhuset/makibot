@@ -83,7 +83,7 @@ var handlers = {
     if (args.length != 2) return channel.send("usage: fisk! alias <username> <alias>");
     aliases[args[0]] = args[1];
     fs.writeFileSync(__dirname + "/aliases.json", JSON.stringify(aliases));
-    channel.send('`'+JSON.stringify(aliases)+'`')
+    channel.send('`' + [].join.call(JSON.stringify(aliases),'\u200B') + '`')
   },
   replace: function(channel, message, args) {
     if (!message.user) return;
