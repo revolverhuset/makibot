@@ -1,12 +1,16 @@
 var menuPages = [
-  'http://www.isushi.no/maki',
-  'http://www.isushi.no/mix/',
-  'http://www.isushi.no/kombo-4/',
-  'http://www.isushi.no/maki-box/',
-  'http://www.isushi.no/nigiri/',
-  'http://www.isushi.no/sashimi/',
-  'http://www.isushi.no/smaretter/',
-  'http://www.isushi.no/ekstra/'
+  'http://bestill.isushi.no/shop/1/cat/51', //småretter
+  'http://bestill.isushi.no/shop/1/cat/49', // maki-fisk
+  'http://bestill.isushi.no/shop/1/cat/100', // maki-kjøtt
+  'http://bestill.isushi.no/shop/1/cat/102', // maki-vegetar
+  'http://bestill.isushi.no/shop/1/cat/48', // kombo
+  'http://bestill.isushi.no/shop/1/cat/46', // mix
+  'http://bestill.isushi.no/shop/1/cat/50', // maki box
+  'http://bestill.isushi.no/shop/1/cat/52', // nigiri
+  'http://bestill.isushi.no/shop/1/cat/53', //sashimi
+  'http://bestill.isushi.no/shop/2/cat/47', //tilbehør
+  'http://bestill.isushi.no/shop/2/cat/54', //annet tilbehør
+  'http://bestill.isushi.no/shop/2/cat/55' //drikke
 ];
 
 var jsdom = require('jsdom');
@@ -19,25 +23,25 @@ var menu = augur();
 async.map(menuPages, function(page, cb) {
   jsdom.env(page, function(err, window) {
     if (err) return cb();
-    var items = window.document.querySelectorAll('.one-quarter');
+    var items = window.document.querySelectorAll('.product_article');
     var collected = [];
     if (!items || items.length == 0) {
       console.log('warning!', page, 'returned no menu items.');
       return callback(null, [])
     }
     [].forEach.call(items, function(item) {
-      var title = item.querySelector('h4 span');
+      var title = item.querySelector('h3');
       if (!title) return;
-      var menuItem = { name: title.innerHTML };
-      var desc = item.querySelectorAll('p');
-      if (desc.length == 0) {
+      var menuItem = { name: title.innerHTML.trim() };
+      var price = item.querySelector('.product_price');
+      if (!price) {
         menuItem.price = 0;
         return collected.push(menuItem);
       }
-      var matchPrice = /(\d+),[\d-]+\s*$/;
-      var concatDesc = [].map.call(desc, function(d) { return d.innerHTML }).join(' ');
-      var priceMatch = concatDesc.match(matchPrice);
-      menuItem.price = priceMatch ? parseInt(priceMatch[1], 10) : 0;
+      var price = parseFloat(price.innerHTML.trim().replace(',','.'))
+      menuItem.price = isNaN(price) ? 0 : price;
+
+      console.log(menuItem);
 
       collected.push(menuItem);
     });
