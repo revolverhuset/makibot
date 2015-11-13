@@ -40,8 +40,9 @@ async.map(menuPages, function(page, cb) {
       }
       var price = parseFloat(price.innerHTML.trim().replace(',','.'))
       menuItem.price = isNaN(price) ? 0 : price;
-
-      console.log(menuItem);
+      
+      var articleIdEl = item.querySelector('input');
+      menuItem.id = articleIdEl.getAttribute('product_id');
 
       collected.push(menuItem);
     });
