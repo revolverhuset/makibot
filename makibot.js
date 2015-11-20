@@ -6,6 +6,7 @@ var price = require('./fetch_price');
 var sharebill = require('./sharebill');
 var _ = require('underscore');
 var SlackMessage = require('slack-client/src/message');
+var postOrderToStore = require('./send_order');
 
 var DELIVERY_COST = 75;
 
@@ -131,13 +132,22 @@ var handlers = {
     orderPendingConfirm = { order: order, mobile: mobileNumber };
     setTimeout(function() {
       orderPendingConfirm = undefined;
-    }, 15000); 
-    channel.send("please use 'fisk! confirmsend' within 15 seconds to send this order to iSushi");
+    }, 10000); 
+    channel.send("please use 'fisk! confirmsend' within 10 seconds to send this order to iSushi");
   },
   confirmsend: function(channel, message, args) {
     if (order == null) return channel.send("there's no open order!");
     if (!orderPendingConfirm) return channel.send("there's no order pending confirmation right now");
-    channel.send("at this point the order would be sent to isushi")
+    postOrderToStore(orderPendingConfirm.order, orderPendingConfirm.mobile, function(err, response) {
+      if (err) {
+        console.log(err);
+        return channel.send("order post to store failed: " + require('util').inspect(err));
+      }
+
+      console.log(response);
+      channel.send("order sent to isushi. confirmation here: " + response.url + "\ncookie required to view page: " + response.cookie);
+    });
+    orderPendingConfirm = undefined;
   },
   summary: function(channel, message, args) {
     if (order == null) return channel.send("i don't see any open order bro");
