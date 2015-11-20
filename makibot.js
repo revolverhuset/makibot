@@ -165,7 +165,7 @@ var handlers = {
       }).sortBy(function(balance) {
         return balance.value;
       }).take(3).map(function(balance) {
-        return balance.key + ' (' + balance.value + ')'
+        return balance.key + ' (' + balance.value.toFixed(0) + ')'
       }).value().join(', '));
     });
   },
