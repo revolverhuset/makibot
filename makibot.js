@@ -127,12 +127,12 @@ var handlers = {
     if (order == null) return channel.send("there is no open order... :/");
     if (!args) return channel.send("usage: fisk! sendorder <mobile number>");
     var mobileNumber = args.replace(/[^\d]/g, '');
-    if (mobileNumber.length != 8) return channel.send(args + " doesn't look like a valid mobile number to me");
-    channel.send("please use `fisk! confirmsend` within 15 seconds to send this order to iSushi");
+    if (!mobileNumber || mobileNumber.length != 8) return channel.send(args + " doesn't look like a valid mobile number to me");
     orderPendingConfirm = { order: order, mobile: mobileNumber };
     setTimeout(function() {
       orderPendingConfirm = undefined;
     }, 15000); 
+    channel.send("please use 'fisk! confirmsend' within 15 seconds to send this order to iSushi");
   },
   confirmsend: function(channel, message, args) {
     if (order == null) return channel.send("there's no open order!");
