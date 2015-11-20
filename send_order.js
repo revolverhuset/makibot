@@ -6,11 +6,11 @@ var serialize = require('serialize-like-php');
 
 var user = {
   customer_id: '1146',
-  customer_name: 'Jon+Packer',
-  customer_mobile: '41191197',
+  customer_name: 'Jon Packer',
+  customer_mobile: '47229085',
   customer_discount_percent: 0,
   delivery_address: {
-    address: 'Olav+Kyrres+gate+28',
+    address: 'Olav Kyrres gate 28',
     zip: '5015',
     city: 'BERGEN',
     entrance: '',
@@ -19,11 +19,12 @@ var user = {
   }
 };
 
-module.exports = function(order, callback) {
+module.exports = function(order, mobileNumber, callback) {
+  user.customer_mobile = mobileNumber;
   matchOrders(order, function(e, matched) {
     if (e) return callback(e);
     var postData = {
-      address: user.delivery_address.address.replace('+', ' '),
+      address: user.delivery_address.address,
       city: 'BERGEN',
       confirm_delivery: 1,
       delivery_days_from_now: 0,
@@ -37,14 +38,15 @@ module.exports = function(order, callback) {
       zip: 5015
     };
     var cart = _.extend({ products: getCartObject(matched) }, user);
+    var cookie ='shopping_cart=' + encodeURIComponent(serialize.serialize(cart)); 
     request.post('http://bestill.isushi.no/shop/checkout', {
       form: postData,
       followRedirect: false,
-      headers: {
-        Cookie: 'shopping_cart=' + encodeURIComponent(serialize.serialize(cart))
-      }
+      headers: { Cookie: cookie }
     }, function(err, response, body) {
-      console.log(err, response, body);
+      if (err) return callback(err);
+      console.log(require('util').inspect(response));
+      callback(null, {url: response.headers['location'], cookie: cookie})
     });
   })
 }
