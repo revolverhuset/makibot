@@ -22,6 +22,7 @@ fs.readFile(__dirname + "/aliases.json", 'utf8', function(e, datas) {
 var slack = new Slack(token, true, true);
 
 var order = undefined;
+var orderPendingConfirm = undefined;
 
 slack.on('message', function(message) {
   if (!message.text) return;
@@ -121,6 +122,22 @@ var handlers = {
     var newCount = order.orders.length;
     channel.send("removed " + (count-newCount) + " orders matching '" + args + "'");
     saveorder();
+  },
+  sendorder: function(channel, message, args) {
+    if (order == null) return channel.send("there is no open order... :/");
+    if (!args) return channel.send("usage: fisk! sendorder <mobile number>");
+    var mobileNumber = args.replace(/[^\d]/g, '');
+    if (mobileNumber.length != 8) return channel.send(args + " doesn't look like a valid mobile number to me");
+    channel.send("please use `fisk! confirmsend` within 15 seconds to send this order to iSushi");
+    orderPendingConfirm = { order: order, mobile: mobileNumber };
+    setTimeout(function() {
+      orderPendingConfirm = undefined;
+    }, 15000); 
+  },
+  confirmsend: function(channel, message, args) {
+    if (order == null) return channel.send("there's no open order!");
+    if (!orderPendingConfirm) return channel.send("there's no order pending confirmation right now");
+    channel.send("at this point the order would be sent to isushi")
   },
   summary: function(channel, message, args) {
     if (order == null) return channel.send("i don't see any open order bro");
