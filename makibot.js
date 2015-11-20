@@ -7,6 +7,8 @@ var sharebill = require('./sharebill');
 var _ = require('underscore');
 var SlackMessage = require('slack-client/src/message');
 var postOrderToStore = require('./send_order');
+var request = require('request');
+var rational = require('big-rational');
 
 var DELIVERY_COST = 75;
 
@@ -148,6 +150,24 @@ var handlers = {
       channel.send("order sent to isushi. confirmation here: " + response.url + "\ncookie required to view page: " + response.cookie);
     });
     orderPendingConfirm = undefined;
+  },
+  suggestpayer: function(channel, message, args) {
+    if (order == null) return channel.send("ain't no open order");
+    var orderSharebillers = order.orders.map(function(orderline) {
+      return aliases[orderline.user];
+    });
+    request('http://sharebill.qpgc.org/balances', function(err, response, body) {
+      if (err) return channel.send('err receiving sharebill balances: ' + require('util').inspect(err));
+      channel.send('candidates for paying: ' + _.chain(JSON.parse(body).rows).map(function(balance) {
+        return { key: balance.key, value: rational(balance.value).valueOf() }
+      }).select(function(balance) {
+        return !!~orderSharebillers.indexOf(balance.key);
+      }).sortBy(function(balance) {
+        return balance.value;
+      }).take(3).map(function(balance) {
+        return balance.key + ' (' + balance.value + ')'
+      }).value().join(', '));
+    });
   },
   summary: function(channel, message, args) {
     if (order == null) return channel.send("i don't see any open order bro");
