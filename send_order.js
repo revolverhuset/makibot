@@ -19,7 +19,16 @@ var user = {
   }
 };
 
-module.exports = function(order, mobileNumber, callback) {
+var createCookie = function(order, mobileNumber, callback) {
+  user.customer_mobile = mobileNumber;
+  matchOrders(order, function(e, matched) {
+    if (e) return callback(e);
+    var cart = _.extend({ products: getCartObject(matched) }, user);
+    var cookie ='shopping_cart=' + encodeURIComponent(serialize.serialize(cart)); 
+    callback(null, cookie);
+  });
+};
+var makeOrder = function(order, mobileNumber, callback) {
   user.customer_mobile = mobileNumber;
   matchOrders(order, function(e, matched) {
     if (e) return callback(e);
@@ -49,6 +58,11 @@ module.exports = function(order, mobileNumber, callback) {
       callback(null, {url: response.headers['location'], cookie: cookie})
     });
   })
+}
+
+module.exports = {
+  createCookie: createCookie,
+  makeOrder: makeOrder
 }
 
 function matchOrders(order, cb) {
