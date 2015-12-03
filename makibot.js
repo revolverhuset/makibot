@@ -6,7 +6,7 @@ var price = require('./fetch_price');
 var sharebill = require('./sharebill');
 var _ = require('underscore');
 var SlackMessage = require('slack-client/src/message');
-var postOrderToStore = require('./send_order');
+var sendOrder = require('./send_order');
 var request = require('request');
 var rational = require('big-rational');
 
@@ -137,10 +137,20 @@ var handlers = {
     }, 10000); 
     channel.send("please use 'fisk! confirmsend' within 10 seconds to send this order to iSushi");
   },
+  cookie: function(channel, message, args) {
+    if (order == null) return channel.send("with what? no one has ordered anything. there's not even an open order.");
+    if (!args) return channel.send("usage: fisk! cookie <mobile number>");
+    var mobileNumber = args.replace(/[^\d]/g, '');
+    if (!mobileNumber || mobileNumber.length != 8) return channel.send(args + " doesn't look like a valid mobile number to me");
+    sendOrder.createCookie(order, mobileNumber, function(err, cookie) {
+      if (err) return channel.send("something broke: " + err);
+      else channel.send("```\n" + cookie + "\n```");
+    });
+  },
   confirmsend: function(channel, message, args) {
     if (order == null) return channel.send("there's no open order!");
     if (!orderPendingConfirm) return channel.send("there's no order pending confirmation right now");
-    postOrderToStore(orderPendingConfirm.order, orderPendingConfirm.mobile, function(err, response) {
+    sendOrder.makeOrder(orderPendingConfirm.order, orderPendingConfirm.mobile, function(err, response) {
       if (err) {
         console.log(err);
         return channel.send("order post to store failed: " + require('util').inspect(err));
