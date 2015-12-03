@@ -29,7 +29,7 @@ var orderPendingConfirm = undefined;
 
 slack.on('message', function(message) {
   if (!message.text) return;
-  var commandMatcher = /^([fm]\w{2,4}[sk]!|helge!|![fm]\w{2,4}[sk]|!iamold)\s+(\w+)\s*(.*)$/;
+  var commandMatcher = /^([fm]\w{2,4}[sk]!|helge!|![fm]\w{2,4}[sk]|!iamold)\s+(\w+)\s*(.*)$/i;
   if (!message.text.match(commandMatcher)) return;
   var channel = slack.getChannelGroupOrDMByID(message.channel);
   var grp = message.text.match(commandMatcher, '');
