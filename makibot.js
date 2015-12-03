@@ -34,10 +34,11 @@ slack.on('message', function(message) {
   var channel = slack.getChannelGroupOrDMByID(message.channel);
   var grp = message.text.match(commandMatcher, '');
   if (!grp) return channel.send(':joearmcat:');
-  if (!grp[2] || !handlers[grp[2]]) {
+  var cmd = grp[2] && grp[2].toLowerCase()
+  if (!cmd || !handlers[cmd]) {
     channel.send('unsupported command! try one of these: ' + Object.keys(handlers).join(', '));
   } else {
-    handlers[grp[2]](channel, message, grp[3]);
+    handlers[cmd](channel, message, grp[3]);
   }
 });
 
