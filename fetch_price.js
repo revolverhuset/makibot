@@ -10,7 +10,11 @@ var menuPages = [
   'http://bestill.isushi.no/shop/1/cat/53', //sashimi
   'http://bestill.isushi.no/shop/2/cat/47', //tilbehør
   'http://bestill.isushi.no/shop/2/cat/54', //annet tilbehør
-  'http://bestill.isushi.no/shop/2/cat/55' //drikke
+  'http://bestill.isushi.no/shop/2/cat/55', //drikke
+  'http://bestill.isushi.no/shop/1/cat/117', //isushi minde varmmat
+  'http://bestill.isushi.no/shop/1/cat/115', //isushi minde supper
+  'http://bestill.isushi.no/shop/1/cat/114', //isushi minde salater
+  'http://bestill.isushi.no/shop/1/cat/116' //isushi minde barnemeny
 ];
 
 var jsdom = require('jsdom');
