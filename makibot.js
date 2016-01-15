@@ -159,6 +159,7 @@ var handlers = {
 
       console.log(response);
       channel.send("order sent to isushi. confirmation here: " + response.url + "\ncookie required to view page: " + response.cookie);
+      handlers.suggestpayer(channel, message);
     });
     orderPendingConfirm = undefined;
   },
