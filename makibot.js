@@ -42,6 +42,10 @@ slack.on('message', function(message) {
   }
 });
 
+slack.on('error', function(err) {
+  console.log('got error', err);
+});
+
 function saveorder() {
   if (!order) return;
     var fn = order.id + ".json";
