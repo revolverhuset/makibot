@@ -42,7 +42,8 @@ async.map(menuPages, function(page, cb) {
         menuItem.price = 0;
         return collected.push(menuItem);
       }
-      var price = parseFloat(price.innerHTML.trim().replace(',','.'))
+      var priceString = parseFloat(price.innerHTML.trim())
+      var price = parseFloat(priceString.replace(',','.').replace(' ', '.'))
       menuItem.price = isNaN(price) ? 0 : price;
       
       var articleIdEl = item.querySelector('input');
