@@ -2,7 +2,7 @@ var request = require('request');
 
 function getUsers(callback) {
   var body = '';
-  var req = request('http://sharebill.qpgc.org/_view/totals?group=true&group_level=1', function(error, res, body) {
+  var req = request('https://sharebill.qpgc.org/_view/totals?group=true&group_level=1', function(error, res, body) {
     if (error || res.statusCode != 200) {
       return callback('Failed to get users from sharebill');
     }
