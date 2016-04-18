@@ -58,15 +58,15 @@ function postBill(debits, total, payid, callback) {
     contents.transaction.credits[payid] = ''+total;
 
     return request.post({
-      url : 'http://sharebill.qpgc.org/the_database/',
+      url : 'https://sharebill.qpgc.org/the_database/',
       body : contents,
       json : true
     }, function (err, res, body) {
-      if (err || res.statusCode >= 400) {
+      if (err || res.statusCode >= 300) {
         return callback('Failed to post bill to sharebill - ' + (err || JSON.stringify({code: res.statusCode, body: body})));
       } else {
         // Let's pretend I did this properly.
-        var ret = 'http://sharebill.qpgc.org/post/'+body.id;
+        var ret = 'https://sharebill.qpgc.org/post/'+body.id;
         return callback(null, ret);
       }
     });
