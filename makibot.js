@@ -283,7 +283,11 @@ function createOrder(channel, message, user, text) {
   order.orders.forEach(function(order) {
     if (order.user == user) order.text += ", " + text;
     else return;
-    channel.send("updated order for " + user + ": " + order.text);
+    // theoretically this will be synchronous and won't cause any problems. theoretically. hopefully. shit.
+    price.fetchMatchesForOrder(text, function(e, matches) {
+      var matchString = matches.map(function(m) { return m.name }).join(', ');
+      channel.send("updated order for " + user + ": " + order.text + " (matched: " + matchString + ")");
+    });
     didUpdateOrder = true;
   });
   if (didUpdateOrder) return saveorder();
