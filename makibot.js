@@ -5,7 +5,6 @@ var async = require('async');
 var price = require('./fetch_price');
 var sharebill = require('./sharebill');
 var _ = require('underscore');
-var SlackMessage = require('slack-client/src/message');
 var sendOrder = require('./send_order');
 var request = require('request');
 var rational = require('big-rational');
