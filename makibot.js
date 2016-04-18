@@ -286,7 +286,7 @@ function createOrder(channel, message, user, text) {
     channel.send("updated order for " + user + ": " + order.text);
     didUpdateOrder = true;
   });
-  if (didUpdateOrder) return;
+  if (didUpdateOrder) return saveorder();
   var newOrder = {user: user || "unnamed user", text: text};
   order.orders.push(newOrder);
   price.fetchMatchesForOrder(newOrder.text, function(e, matches) {
