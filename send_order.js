@@ -28,6 +28,27 @@ var createCookie = function(order, mobileNumber, callback) {
     callback(null, cookie);
   });
 };
+
+var changeMobileNumber(cookie, mobileNumber, callback) {
+  request.post('http://bestill.isushi.no/kunde/profil', {
+    form: {
+      first_name: 'Jon',
+      sur_name: 'Packer',
+      pin: '1162',
+      email: 'makibot.ejf1s@zapiermail.com',
+      mobile: mobileNumber,
+      action: 'saveProfileButton',
+      saveProfileButton: ''
+    },
+    headers: { Cookie: cookie }
+  }, function(err, response, body) {
+    if (response.statusCode == 200) callback();
+    else callback(new Error('OH NOSE when updating profile - ' + response.statusCode + ' - I has dumped to console'));
+    var i = require('util').inspect;
+    console.log(i(err), i(response), i(body));
+  });
+}
+
 var makeOrder = function(order, mobileNumber, callback) {
   user.customer_mobile = mobileNumber;
   matchOrders(order, function(e, matched) {
@@ -48,14 +69,17 @@ var makeOrder = function(order, mobileNumber, callback) {
     };
     var cart = _.extend({ products: getCartObject(matched) }, user);
     var cookie ='shopping_cart=' + encodeURIComponent(serialize.serialize(cart)); 
-    request.post('http://bestill.isushi.no/shop/checkout', {
-      form: postData,
-      followRedirect: false,
-      headers: { Cookie: cookie }
-    }, function(err, response, body) {
+    changeMobileNumber(cookie, mobileNumber, function(err) {
       if (err) return callback(err);
-      console.log(require('util').inspect(response));
-      callback(null, {url: response.headers['location'], cookie: cookie})
+      request.post('http://bestill.isushi.no/shop/checkout', {
+        form: postData,
+        followRedirect: false,
+        headers: { Cookie: cookie }
+      }, function(err, response, body) {
+        if (err) return callback(err);
+        console.log(require('util').inspect(response));
+        callback(null, {url: response.headers['location'], cookie: cookie})
+      });
     });
   })
 }
