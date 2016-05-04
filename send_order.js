@@ -69,8 +69,8 @@ var makeOrder = function(order, mobileNumber, callback) {
     };
     var cart = _.extend({ products: getCartObject(matched) }, user);
     var cookie ='shopping_cart=' + encodeURIComponent(serialize.serialize(cart)); 
-    changeMobileNumber(cookie, mobileNumber, function(err) {
-      if (err) return callback(err);
+    //changeMobileNumber(cookie, mobileNumber, function(err) {
+      //if (err) return callback(err);
       request.post('http://bestill.isushi.no/shop/checkout', {
         form: postData,
         followRedirect: false,
@@ -80,7 +80,7 @@ var makeOrder = function(order, mobileNumber, callback) {
         console.log(require('util').inspect(response));
         callback(null, {url: response.headers['location'], cookie: cookie})
       });
-    });
+    //});
   })
 }
 
