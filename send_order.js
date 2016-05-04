@@ -29,7 +29,7 @@ var createCookie = function(order, mobileNumber, callback) {
   });
 };
 
-var changeMobileNumber(cookie, mobileNumber, callback) {
+var changeMobileNumber = function(cookie, mobileNumber, callback) {
   request.post('http://bestill.isushi.no/kunde/profil', {
     form: {
       first_name: 'Jon',
