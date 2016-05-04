@@ -235,8 +235,7 @@ var handlers = {
 
       // Total is simply built as a string to preserve the fraction.
       Object.keys(accounts).map(function(key, idx) {
-        
-        accounts[key] = '' + accounts[key] + ' '+ (DELIVERY_COST * accountOccurances[alias])+'/'+order.orders.length;
+        accounts[key] = '' + accounts[key] + ' '+ (DELIVERY_COST * accountOccurances[key])+'/'+order.orders.length;
       });
 
       return sharebill(accounts, totalPrice, args, function(error, result) {
