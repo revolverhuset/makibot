@@ -278,7 +278,7 @@ var handlers = {
     files = files.filter(function(f) { return !!f.match(/^order_\d+\.json/) }).sort().reverse();
 
     function getFileOrders(file) {
-      var fileData = fs.readFileSync(__dirname + '/' + args, 'utf8');
+      var fileData = fs.readFileSync(__dirname + '/' + file, 'utf8');
       var data;
       try {
         data = JSON.parse(fileData);
