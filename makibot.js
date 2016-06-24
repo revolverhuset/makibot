@@ -273,29 +273,35 @@ var handlers = {
   },
   reorder: function(channel, message, args) {
     if (order == null) return channel.send("wat. no open order. open an order.");
-    if (args == '') args = '-1';
-    var query = parseInt(args);
-    if (isNaN(args) || args >= 1) return channel.send("usage: fisk! reorder <backwards count to previous order>. for example: fisk! reorder -1 for the previously saved order");
 
     var files = fs.readdirSync(__dirname);
     files = files.filter(function(f) { return !!f.match(/^order_\d+\.json/) }).sort().reverse();
-    args = files[Math.abs(query)];
-    if (args == null) return channel.send("there are only " + files.length + " saved orders");
 
-    var file = fs.readFileSync(__dirname + '/' + args, 'utf8');
-    var data;
-    try {
-      data = JSON.parse(file);
-      if (!Array.isArray(data.orders)) throw "invalid file";
-    } catch (e) {
-      return channel.send("bad file: "+e);
+    function getFileOrders(file) {
+      var fileData = fs.readFileSync(__dirname + '/' + args, 'utf8');
+      var data;
+      try {
+        data = JSON.parse(fileData);
+        if (!Array.isArray(data.orders)) throw "invalid file";
+      } catch (e) {
+        return channel.send("bad file: "+e);
+      }
+      return data ? data.orders : [];
     }
 
+    var prevOrder;
+    var orderIndex = 1;
     var user = slack.getUserByID(message.user);
-    var matchingOrders = data.orders.filter(function(order) { order.user == user.name });
-    if (matchingOrders.length == 0) return channel.send("no matching orders for you from that order");
 
-    createOrder(channel, message, user.name, matchingOrders[0].text);
+    while (!prevOrder) {
+      var orders = getFileOrders[orderIndex++];
+      var matchingOrders = orders.filter(function(order) { order.user == user.name });
+      if (matchingOrders.length > 0) prevOrder = matchingOrders[0];
+    }
+
+    if (!prevOrder) return channel.send("couldn't find a previous order from you");
+
+    createOrder(channel, message, user.name, prevOrder.text);
   }
 }
 
