@@ -270,6 +270,32 @@ var handlers = {
 
     order = data;
     handlers.summary(channel, message);
+  },
+  reorder: function(channel, message, args) {
+    if (order != null) return channel.send("wat. no open order. open an order.");
+    if (args == '') args = '-1';
+    var query = parseInt(args);
+    if (isNaN(args) || args >= 1) return channel.send("usage: fisk! reorder <backwards count to previous order>. for example: fisk! reorder -1 for the previously saved order");
+
+    var files = fs.readdirSync(__dirname);
+    files = files.filter(function(f) { return !!f.match(/^order_\d+\.json/) }).sort().reverse();
+    args = files[Math.abs(query)];
+    if (args == null) return channel.send("there are only " + files.length + " saved orders");
+
+    var file = fs.readFileSync(__dirname + '/' + args, 'utf8');
+    var data;
+    try {
+      data = JSON.parse(file);
+      if (!Array.isArray(data.orders)) throw "invalid file";
+    } catch (e) {
+      return channel.send("bad file: "+e);
+    }
+
+    var user = slack.getUserByID(message.user);
+    var matchingOrders = data.orders.filter(function(order) { order.user == user.name });
+    if (matchingOrders.length == 0) return channel.send("no matching orders for you from that order");
+
+    createOrder(channel, message, user.name, matchingOrders[0].text);
   }
 }
 
