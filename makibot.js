@@ -272,7 +272,7 @@ var handlers = {
     handlers.summary(channel, message);
   },
   reorder: function(channel, message, args) {
-    if (order != null) return channel.send("wat. no open order. open an order.");
+    if (order == null) return channel.send("wat. no open order. open an order.");
     if (args == '') args = '-1';
     var query = parseInt(args);
     if (isNaN(args) || args >= 1) return channel.send("usage: fisk! reorder <backwards count to previous order>. for example: fisk! reorder -1 for the previously saved order");
