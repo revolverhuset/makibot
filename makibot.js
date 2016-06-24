@@ -294,8 +294,8 @@ var handlers = {
     var user = slack.getUserByID(message.user);
 
     while (!prevOrder) {
-      var orders = getFileOrders[orderIndex++];
-      var matchingOrders = orders.filter(function(order) { order.user == user.name });
+      var orders = getFileOrders(files[orderIndex++]);
+      var matchingOrders = orders.orders.filter(function(order) { order.user == user.name });
       if (matchingOrders.length > 0) prevOrder = matchingOrders[0];
     }
 
